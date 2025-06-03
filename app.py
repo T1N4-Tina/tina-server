@@ -9,12 +9,14 @@ app = Flask(__name__)
 @app.route('/analyze_image', methods=['POST'])
 def analyze_image():
     try:
-        # Chiede l'immagine al robot
-        response = requests.get("http://192.168.1.42:5001/latest.jpg")
-        img_array = np.frombuffer(response.content, np.uint8)
+        if 'file' not in request.files:
+            return jsonify({"status": "errore", "messaggio": "Nessun file ricevuto"})
+
+        file = request.files['file']
+        img_array = np.frombuffer(file.read(), np.uint8)
         image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
 
-        # Simulazione oggetti rilevati
+        # Simulazione rilevamento oggetti
         oggetti = [
             {"nome": "Tavolo", "centroide": {"x": 300, "y": 400}},
             {"nome": "Sedia", "centroide": {"x": 100, "y": 420}},
