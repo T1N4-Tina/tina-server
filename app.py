@@ -1,64 +1,38 @@
 from flask import Flask, request, jsonify
-import requests
-import cv2
-import numpy as np
+import re
 
 app = Flask(__name__)
 
-# 🔍 Endpoint: analizza immagine e restituisce oggetti rilevati
-@app.route('/analyze_image', methods=['POST'])
-def analyze_image():
+@app.route('/comando', methods=['POST'])
+def ricevi_comando():
+    data = request.get_json()
+    comando = data.get("comando", "")
+
+    # Verifica formato: es. parla("Ciao")
+    if not re.match(r'^\w+\(\".*\"\)$', comando):
+        return jsonify({
+            "stato": "errore",
+            "messaggio": "Formato comando non valido: usa es. parla(\"testo\")"
+        })
+
     try:
-        if 'file' not in request.files:
-            return jsonify({"status": "errore", "messaggio": "Nessun file ricevuto"})
-
-        file = request.files['file']
-        img_array = np.frombuffer(file.read(), np.uint8)
-        image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-
-        # Simulazione rilevamento oggetti
-        oggetti = [
-            {"nome": "Tavolo", "centroide": {"x": 300, "y": 400}},
-            {"nome": "Sedia", "centroide": {"x": 100, "y": 420}},
-            {"nome": "Bicchiere", "centroide": {"x": 520, "y": 350}}
-        ]
+        with open("comando_corrente.txt", "w") as f:
+            f.write(comando)
 
         return jsonify({
-            "status": "ok",
-            "oggetti": oggetti
+            "stato": "ok",
+            "messaggio": f"Comando ricevuto e salvato: {comando}"
         })
 
     except Exception as e:
         return jsonify({
-            "status": "errore",
-            "messaggio": str(e)
+            "stato": "errore",
+            "messaggio": f"Errore salvataggio comando: {str(e)}"
         })
 
-# 🗣️ Endpoint: descrive l’immagine in modo umano e poetico
-@app.route('/descrivi_immagine', methods=['POST'])
-def descrivi_immagine():
-    try:
-        # Chiede l'immagine al robot (non la usa per ora)
-        _ = requests.get("http://192.168.1.42:5001/latest.jpg")
+@app.route('/', methods=['GET'])
+def home():
+    return "Tina è viva 🧠🤖"
 
-        # Descrizione simulata
-        descrizione = (
-            "Davanti a me c'è un tavolo ben apparecchiato con piatti, posate e un bicchiere di vino. "
-            "L'atmosfera è tranquilla, le luci sono soffuse... "
-            "Direi che è una serata romantica, forse qualcuno sta aspettando compagnia 🍷✨"
-        )
-
-        return jsonify({
-            "status": "ok",
-            "descrizione": descrizione
-        })
-
-    except Exception as e:
-        return jsonify({
-            "status": "errore",
-            "messaggio": str(e)
-        })
-
-# 🔧 Avvio server
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
