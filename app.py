@@ -33,6 +33,15 @@ def ricevi_comando():
 @app.route('/', methods=['GET'])
 def home():
     return "Tina è viva 🧠🤖"
+    
+@app.route('/comando_corrente', methods=['GET'])
+def leggi_comando_corrente():
+    try:
+        with open("comando_corrente.txt", "r") as f:
+            comando = f.read().strip()
+        return jsonify({"stato": "ok", "comando": comando})
+    except FileNotFoundError:
+        return jsonify({"stato": "vuoto", "comando": ""})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
